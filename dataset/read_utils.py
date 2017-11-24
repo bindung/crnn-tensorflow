@@ -1,4 +1,6 @@
 import tensorflow as tf
+
+
 def read_and_decode(filename, num_epochs):  # read iris_contact.tfrecords
     filename_queue = tf.train.string_input_producer(
         [filename], num_epochs=num_epochs)
@@ -43,17 +45,18 @@ def inputs(batch_size, num_epochs, filename):
 
         return sh_images, sh_labels, sh_length
 
-def preprocess_for_train(image,label ,scope='crnn_preprocessing_train'):
+
+def preprocess_for_train(image, label, scope='crnn_preprocessing_train'):
     """Preprocesses the given image for training.
     """
     with tf.name_scope(scope, 'ssd_preprocessing_train', [image]):
         if image.get_shape().ndims != 3:
             raise ValueError('Input must be of size [height, width, C>0]')
         if image.dtype != tf.float32:
-            image = tf.image.convert_image_dtype(image, dtype=tf.float32)# convert image as a tf.float32 tensor
+            image = tf.image.convert_image_dtype(image, dtype=tf.float32)  # convert image as a tf.float32 tensor
             image_s = tf.expand_dims(image, 0)
-            tf.summary.image("image",image_s)
+            tf.summary.image("image", image_s)
 
         image = tf.image.rgb_to_grayscale(image)
-        tf.summary.image("gray",image)
+        tf.summary.image("gray", image)
         return image, label

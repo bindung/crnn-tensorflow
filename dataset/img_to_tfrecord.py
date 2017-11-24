@@ -3,10 +3,10 @@ import tensorflow as tf
 import os
 import sys
 import glob
-from dataset.utils import _get_output_filename,int64_feature,bytes_feature
+from dataset.utils import _get_output_filename, int64_feature, bytes_feature
 
 
-def img_to_tfrecord(image_dir,text_dir,text_name,output_dir,name):
+def img_to_tfrecord(image_dir, text_dir, text_name, output_dir, name):
     """
 
     :param image_dir: image_dir just like "data/Challenge2_Training_Task12_Images/*.jpg"
@@ -48,17 +48,18 @@ def img_to_tfrecord(image_dir,text_dir,text_name,output_dir,name):
 
 
             example = tf.train.Example(features=tf.train.Features(feature={"label": bytes_feature(labels[i]),
-                                                                           "index":int64_feature(indexs[i]),
+                                                                           "index": int64_feature(indexs[i]),
                                                                            'image/shape': int64_feature(shapes[i]),
                                                                            "image/encoded": bytes_feature(image_data),
-                                                                           'image/format': bytes_feature(image_format)}))
+                                                                           'image/format': bytes_feature(
+                                                                               image_format)}))
             tfrecord_writer.write(example.SerializeToString())
     print('\nFinished converting the dataset!')
 
 
 image_dir = "data/ICDAR_CROP/*.jpg"
-text_dir ="data/ICDAR_CROP"
+text_dir = "data/ICDAR_CROP"
 text_name = "labels.txt"
 output_dir = "data/tfrecord"
 name = "train"
-img_to_tfrecord(image_dir,text_dir,text_name,output_dir,name)
+img_to_tfrecord(image_dir, text_dir, text_name, output_dir, name)

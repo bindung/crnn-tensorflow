@@ -11,7 +11,7 @@ gt_text_dir = "data/Challenge2_Training_Task1_GT"
 # original images directory
 image_dir = "data/Challenge2_Training_Task12_Images/*.jpg"
 imgDirs = []
-imgLists = glob.glob(image_dir)#return a list
+imgLists = glob.glob(image_dir)  # return a list
 print(imgLists)
 # where to save the images with ground truth boxes
 imgs_save_dir = "data/ICDAR_CROP"
@@ -47,16 +47,16 @@ for img_dir in imgDirs:
         rect.append(float(spt[2]))
         rect.append(float(spt[3]))
         labels.append(spt[4])
-        img_rect = img.crop((rect[0],rect[1],rect[2],rect[3]))
+        img_rect = img.crop((rect[0], rect[1], rect[2], rect[3]))
         print(img_rect.size)
-        img_rect = img_rect.resize(tuple([100,32]))
-        image_name = str("%06d"%(count+1))+temp2
+        img_rect = img_rect.resize(tuple([100, 32]))
+        image_name = str("%06d" % (count + 1)) + temp2
         img_rect.save(os.path.join(imgs_save_dir, image_name))
         shapes.append(img_rect.size)
         count += 1
-    #img.save(os.path.join(imgs_save_dir, img_basename))
+        # img.save(os.path.join(imgs_save_dir, img_basename))
 txt_dir = os.path.join(imgs_save_dir, text_save_dir)
-text_file = open(txt_dir,'w')
-for i,label in enumerate(labels):
-    text_file.write('%06d %s %f %f \n'%(i+1,label,shapes[i][0],shapes[i][1]))
+text_file = open(txt_dir, 'w')
+for i, label in enumerate(labels):
+    text_file.write('%06d %s %f %f \n' % (i + 1, label, shapes[i][0], shapes[i][1]))
 text_file.close()
