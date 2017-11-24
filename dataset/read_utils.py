@@ -14,6 +14,7 @@ def read_and_decode(filename, num_epochs):  # read iris_contact.tfrecords
                                        })  # return image and label
 
     img = tf.image.decode_png(features['image/encoded'])
+    img = tf.reshape(img, [32, 100, 3]);
     img = tf.cast(img, tf.float32) * (1. / 255) - 0.5  # throw img tensor
     labels = tf.cast(features['labels'], tf.int32)  # throw label tensor
     return img, img.shape[1], labels
@@ -29,11 +30,12 @@ def inputs(batch_size, num_epochs, filename):
         # Shuffle the examples and collect them into batch_size batches.
         # (Internally uses a RandomShuffleQueue.)
         # We run this in two threads to avoid being a bottleneck.
-        sh_images, sh_width, sh_labels = tf.train.shuffle_batch(
-            [img, width, label], batch_size=batch_size, num_threads=2,
-            capacity=1000 + 3 * batch_size,
-            # Ensures a minimum amount of shuffling of examples.
-            min_after_dequeue=100)
+        sh_images, sh_width, sh_labels = tf.train.shuffle_batch([img, width, label],
+                                                                batch_size=batch_size,
+                                                                num_threads=2,
+                                                                capacity=1000 + 3 * batch_size,
+                                                                # Ensures a minimum amount of shuffling of examples.
+                                                                min_after_dequeue=100)
 
         return sh_images, sh_width, sh_labels
 

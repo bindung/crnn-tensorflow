@@ -3,7 +3,7 @@ import tensorflow as tf
 from dataset.utils import _get_output_filename, int64_feature, bytes_feature
 from PIL import Image
 
-format = 'png'
+format = 'jpeg'
 
 
 def img_to_tfrecord(image_dir, gt_file, tf_filename):
@@ -17,12 +17,13 @@ def img_to_tfrecord(image_dir, gt_file, tf_filename):
             labels = [ord(c) for c in text]
 
             image = Image.open(os.path.join(image_dir, imname))
-            image = image.resize((int(image.width * 32 / image.height), 32))
+            image = image.convert('RGB')
+            image = image.resize((32, 100))
             b = io.BytesIO()
             image.save(b, format)
             example = tf.train.Example(features=tf.train.Features(feature={"labels": int64_feature(labels),
                                                                            'image/height': int64_feature(32),
-                                                                           'image/width': int64_feature(image.width),
+                                                                           'image/width': int64_feature(100),
                                                                            "image/encoded": bytes_feature(b.getvalue()),
                                                                            'image/format': bytes_feature(format)}))
             tfrecord_writer.write(example.SerializeToString())

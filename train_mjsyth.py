@@ -1,11 +1,11 @@
 import tensorflow as tf
-
-slim = tf.contrib.slim
+import os
 import time
 from net import model
 from dataset import read_utils
 from tensorflow.python import debug as tf_debug
 
+slim = tf.contrib.slim
 batch_size = 32
 num_readers = 4
 num_epochs = 2
@@ -61,15 +61,15 @@ def main(_):
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
         # sess = tf_debug.LocalCLIDebugWrapperSession(sess)
         merged = tf.summary.merge_all()
-        file_writer = tf.summary.FileWriter('./tmp/my-model', sess.graph)
+        file_writer = tf.summary.FileWriter(os.path.join(checkpoint_dir, 'my-model'), sess.graph)
 
         try:
             step = global_step
             while not coord.should_stop():
                 start_time = time.time()
 
-                _, merged_t, val_cost, val_ler, lr, step = sess.run(
-                    [optimizer, merged, cost, acc, learning_rate, global_step])
+                _, merged_t, val_cost, val_ler, lr, step = \
+                    sess.run([optimizer, merged, cost, acc, learning_rate, global_step])
 
                 duration = time.time() - start_time
 
@@ -78,8 +78,8 @@ def main(_):
                 # Print an overview fairly often.
                 if step % 10 == 0:
                     print('Step %d:  acc %.3f (%.3f sec)' % (step, val_ler, duration))
-                    save.save(sess, "./tmp/crnn-model.ckpt", global_step=global_step)
-                step += 1
+                    save.save(sess, os.path.join(checkpoint_dir, "crnn-model.ckpt"), global_step=global_step)
+                    step += 1
         except tf.errors.OutOfRangeError:
             print('Done training for %d epochs, %d steps.' % (num_epochs, step))
         finally:
