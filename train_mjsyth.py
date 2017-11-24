@@ -3,7 +3,6 @@ import os
 import time
 from net import model
 from dataset import read_utils
-from deployment import model_deploy
 from tensorflow.python import debug as tf_debug
 
 slim = tf.contrib.slim
@@ -21,14 +20,7 @@ def main(_):
     file_name = "train_data/train.tfrecord"
 
     with tf.Graph().as_default():
-        deploy_config = model_deploy.DeploymentConfig(
-            num_clones=1,
-            clone_on_cpu=False,
-            replica_id=0,
-            num_replicas=1,
-            num_ps_tasks=0)
-
-        with tf.device(deploy_config.variables_device()):
+        with tf.device("/device:GPU:0"):
             # Create global_step.
             global_step = tf.Variable(0, name='global_step', trainable=False)
 
@@ -56,7 +48,7 @@ def main(_):
             acc = tf.reduce_mean(tf.edit_distance(tf.cast(decoded[0], tf.int32), sh_labels))
             tf.summary.scalar("edit_distance", acc)
 
-            sess = tf.Session()
+            sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
 
             save = tf.train.Saver(max_to_keep=2)
             if tf.train.latest_checkpoint(checkpoint_dir) is None:

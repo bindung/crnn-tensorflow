@@ -50,3 +50,4 @@ Temporary Items
 train_data
 eval_data
 __pycache__
+*.pyc
