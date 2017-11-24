@@ -6,6 +6,7 @@ import tensorflow as tf
 from deployment import model_deploy
 import os
 from tensorflow.python.ops import array_ops
+
 slim = tf.contrib.slim
 import time
 from net import model
@@ -25,6 +26,7 @@ _R_MEAN = 123.
 _G_MEAN = 117.
 _B_MEAN = 104.
 
+
 def tf_image_whitened(image, means=[_R_MEAN, _G_MEAN, _B_MEAN]):
     """Subtracts the given means from each image channel.
     Returns:
@@ -39,6 +41,8 @@ def tf_image_whitened(image, means=[_R_MEAN, _G_MEAN, _B_MEAN]):
     mean = tf.constant(means, dtype=image.dtype)
     image = image - mean
     return image
+
+
 def _ImageDimensions(image):
     """Returns the dimensions of an image tensor.
     Args:
@@ -55,7 +59,9 @@ def _ImageDimensions(image):
         dynamic_shape = array_ops.unstack(array_ops.shape(image), 3)
         return [s if s is not None else d
                 for s, d in zip(static_shape, dynamic_shape)]
-def resize_image(image ,size,
+
+
+def resize_image(image, size,
                  method=tf.image.ResizeMethod.BILINEAR,
                  align_corners=False):
     """Resize an image and bounding boxes.
@@ -72,8 +78,7 @@ def resize_image(image ,size,
         return image
 
 
-
-def preprocess_for_train(image,label ,scope='crnn_preprocessing_train'):
+def preprocess_for_train(image, label, scope='crnn_preprocessing_train'):
     """Preprocesses the given image for training.
 
     Note that the actual resizing scale is sampled from
@@ -90,21 +95,21 @@ def preprocess_for_train(image,label ,scope='crnn_preprocessing_train'):
             raise ValueError('Input must be of size [height, width, C>0]')
         # Convert to float scaled [0, 1].
         if image.dtype != tf.float32:
-            image = tf.image.convert_image_dtype(image, dtype=tf.float32)# convert image as a tf.float32 tensor
+            image = tf.image.convert_image_dtype(image, dtype=tf.float32)  # convert image as a tf.float32 tensor
             image_s = tf.expand_dims(image, 0)
-            tf.summary.image("image",image_s)
+            tf.summary.image("image", image_s)
 
-        image =  tf.image.rgb_to_grayscale(image)
-        tf.summary.image("gray",image)
-        return  image,label,
+        image = tf.image.rgb_to_grayscale(image)
+        tf.summary.image("gray", image)
+        return image, label,
 
 
-def get_split(file_dir,reader = None):
+def get_split(file_dir, reader=None):
     # Allowing None in the signature so that dataset_factory can use the default.
     if reader is None:
         reader = tf.TFRecordReader
     keys_to_features = {
-        'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),#三个参数：shape,type,default_value
+        'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),  # 三个参数：shape,type,default_value
         'image/format': tf.FixedLenFeature((), tf.string, default_value='jpeg'),
         'image/shape': tf.FixedLenFeature([3], tf.int64),
         'label': tf.FixedLenFeature((), tf.string, default_value='unknow'),
@@ -119,20 +124,19 @@ def get_split(file_dir,reader = None):
     decoder = slim.tfexample_decoder.TFExampleDecoder(
         keys_to_features, items_to_handlers)
     return slim.dataset.Dataset(
-            data_sources=file_dir,
-            reader=reader,
-            decoder=decoder,
-            num_samples=849,
-            items_to_descriptions = ITEMS_TO_DESCRIPTIONS
-            )
+        data_sources=file_dir,
+        reader=reader,
+        decoder=decoder,
+        num_samples=849,
+        items_to_descriptions=ITEMS_TO_DESCRIPTIONS
+    )
 
 
 # =========================================================================== #
 # Main
 # =========================================================================== #
 def main(_):
-    tf.logging.set_verbosity(tf.logging.DEBUG)#设置显示的log的阈值
-
+    tf.logging.set_verbosity(tf.logging.DEBUG)  # 设置显示的log的阈值
 
     with tf.Graph().as_default():
         # Config model_deploy. Keep TF Slim Models structure.
@@ -142,7 +146,8 @@ def main(_):
         with tf.device(deploy_config.variables_device()):
             global_step = slim.create_global_step()
         file_name = os.path.join("../tfrecord", "train.tfrecords")
-        def read_and_decode(filename,num_epochs):  # read iris_contact.tfrecords
+
+        def read_and_decode(filename, num_epochs):  # read iris_contact.tfrecords
             filename_queue = tf.train.string_input_producer(
                 [filename], num_epochs=num_epochs)
             reader = tf.TFRecordReader()
@@ -162,18 +167,17 @@ def main(_):
             # img = tf.decode_raw(features['image/encoded'], tf.uint8)
             img = tf.image.decode_jpeg(features['image/encoded'])
             shape = features["image/shape"]
-            img = tf.reshape(img, [32, 100, 3]) #  reshape image to 512*80*3
+            img = tf.reshape(img, [32, 100, 3])  # reshape image to 512*80*3
             img = tf.cast(img, tf.float32) * (1. / 255) - 0.5  # throw img tensor
-            label = features['label'] # throw label tensor
+            label = features['label']  # throw label tensor
             index = features["index"]
-            return img, label,shape,index
+            return img, label, shape, index
 
         def preprocess(image_raw):
             image = tf.image.decode_jpeg(tf.image.encode_jpeg(image_raw))
-            return resize_image(image,(100,32))
+            return resize_image(image, (100, 32))
 
-
-        def inputs( batch_size, num_epochs,filename):
+        def inputs(batch_size, num_epochs, filename):
             """Reads input data num_epochs times.
             Args:
               train: Selects between the training (True) and validation (False) data.
@@ -190,38 +194,37 @@ def main(_):
               must be run using e.g. tf.train.start_queue_runners().
             """
             if not num_epochs: num_epochs = None
-            #filename = os.path.join(file_dir)
+            # filename = os.path.join(file_dir)
 
             with tf.name_scope('input'):
                 # Even when reading in multiple threads, share the filename
                 # queue.
-                image, label,shape,index= read_and_decode(filename,num_epochs)
+                image, label, shape, index = read_and_decode(filename, num_epochs)
 
-                #image = preprocess(image)
+                # image = preprocess(image)
                 # Shuffle the examples and collect them into batch_size batches.
                 # (Internally uses a RandomShuffleQueue.)
                 # We run this in two threads to avoid being a bottleneck.
-                images, shuffle_labels,sshape,sindex = tf.train.shuffle_batch(
-                    [image, label,shape,index], batch_size=batch_size, num_threads=2,
+                images, shuffle_labels, sshape, sindex = tf.train.shuffle_batch(
+                    [image, label, shape, index], batch_size=batch_size, num_threads=2,
                     capacity=1000 + 3 * batch_size,
                     # Ensures a minimum amount of shuffling of examples.
                     min_after_dequeue=100)
 
-                return images, shuffle_labels,sshape,sindex
-
+                return images, shuffle_labels, sshape, sindex
 
         with tf.Graph().as_default():
             # Input images and labels.
             starter_learning_rate = 0.1
             learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step,
                                                        100000, 0.96, staircase=True)
-            images, shuffle_labels, sshape, sindex = inputs( filename = file_name,batch_size=batch_size,
-                                    num_epochs=num_epochs)
+            images, shuffle_labels, sshape, sindex = inputs(filename=file_name, batch_size=batch_size,
+                                                            num_epochs=num_epochs)
 
             crnn = model.CRNNNet()
             logits, inputs, seq_len, W, b = crnn.net(images)
 
-            shuffle_labels = ['123456','123','12342']
+            shuffle_labels = ['123456', '123', '12342']
             labels = shuffle_labels
 
             def sparse_tuple_from(sequences, dtype=np.int32):
@@ -246,8 +249,9 @@ def main(_):
 
             sparse_labels = sparse_tuple_from(labels)
 
-            cost = crnn.losses(sparse_labels,logits, seq_len)
-            optimizer = tf.train.AdadeltaOptimizer(learning_rate = learning_rate).minimize(loss=cost,global_step=global_step)
+            cost = crnn.losses(sparse_labels, logits, seq_len)
+            optimizer = tf.train.AdadeltaOptimizer(learning_rate=learning_rate).minimize(loss=cost,
+                                                                                         global_step=global_step)
 
             # Option 2: tf.contrib.ctc.ctc_beam_search_decoder
             # (it's slower but you'll get better results)
@@ -259,10 +263,10 @@ def main(_):
             sess = tf.Session()
             init_op = tf.group(tf.global_variables_initializer(),
                                tf.local_variables_initializer())
-            sess.run(init_op)            # Start input enqueue threads.
+            sess.run(init_op)  # Start input enqueue threads.
             coord = tf.train.Coordinator()
             threads = tf.train.start_queue_runners(sess=sess, coord=coord)
-            #sess = tf_debug.LocalCLIDebugWrapperSession(sess)
+            # sess = tf_debug.LocalCLIDebugWrapperSession(sess)
             try:
                 step = 0
                 while not coord.should_stop():
@@ -274,7 +278,7 @@ def main(_):
                     # of your ops or variables, you may include them in
                     # the list passed to sess.run() and the value tensors
                     # will be returned in the tuple from the call.
-                    #timages, tsparse_labels, tsshape, tsindex = sess.run([images, sparse_labels, sshape, sindex])
+                    # timages, tsparse_labels, tsshape, tsindex = sess.run([images, sparse_labels, sshape, sindex])
 
                     val_cost, val_ler, lr, step = sess.run([cost, acc, learning_rate, global_step])
 
@@ -284,7 +288,7 @@ def main(_):
 
                     # Print an overview fairly often.
                     if step % 10 == 0:
-                        print('Step %d:  (%.3f sec)' % (step,duration))
+                        print('Step %d:  (%.3f sec)' % (step, duration))
                     step += 1
             except tf.errors.OutOfRangeError:
                 print('Done training for %d epochs, %d steps.' % (num_epochs, step))
@@ -295,6 +299,7 @@ def main(_):
                 # Wait for threads to finish.
             coord.join(threads)
             sess.close()
+
+
 if __name__ == '__main__':
     tf.app.run()
-

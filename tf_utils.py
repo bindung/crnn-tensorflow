@@ -25,6 +25,6 @@ def reshape_list(l, shape=None):
             if s == 1:
                 r.append(l[i])
             else:
-                r.append(l[i:i+s])
+                r.append(l[i:i + s])
             i += s
     return r
