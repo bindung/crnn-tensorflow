@@ -1,6 +1,6 @@
 import tensorflow as tf
 import os
-import Image
+from PIL import Image
 import numpy as np
 
 char_list = "0123456789abcdefghijklmnopqrstuvwxyz "
@@ -89,6 +89,7 @@ def load_image(img_dir, width=100, height=32):
     return data
 
 
+
 def char_to_int(char):
     temp = ord(char)
     if temp >= 97 and temp <= 122:
@@ -149,7 +150,7 @@ def sparse_tensor_to_str(spares_tensor):
     for i, index in enumerate(indices):
         number_lists[index[0], index[1]] = values[i]
     for number_list in number_lists:
-        str_lists.append([int_to_char(val) for val in number_list])
+        str_lists.append([chr(val) for val in number_list])
     for str_list in str_lists:
         str += ''.join(str_list)
     return str

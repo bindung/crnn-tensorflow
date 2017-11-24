@@ -41,7 +41,8 @@ class CRNNNet(object):
         nh=100,  # size of the lstm hidden state
         imgH=64,  # the height / width of the input image to network
         nc=1,
-        nclass=37,  # 0~9,a~z,还有一个啥都不是
+        # nclass=37,  # 0~9,a~z,还有一个啥都不是
+        nclass=127,
         batch_size=32,
         seq_length=26,
         input_size=512,
@@ -67,11 +68,13 @@ class CRNNNet(object):
             # Can be:
             #   tf.nn.rnn_cell.RNNCell
             #   tf.nn.rnn_cell.GRUCell
-            cell = tf.contrib.rnn.core_rnn_cell.LSTMCell(num_hidden, state_is_tuple=True, reuse=self.params.reuse)
+            cell = tf.contrib.rnn.LSTMCell(num_hidden,
+                                           state_is_tuple=True,
+                                           reuse=self.params.reuse)
 
             # Stacking rnn cells
-            stack = tf.contrib.rnn.core_rnn_cell.MultiRNNCell([cell] * num_layers,
-                                                              state_is_tuple=True)
+            stack = tf.contrib.rnn.MultiRNNCell([cell] * num_layers,
+                                                state_is_tuple=True)
 
             # The second output is the last state and we will no use that
             outputs, _ = tf.nn.dynamic_rnn(cell, inputs, sequence_length=seq_len, dtype=tf.float32)  # seq_len
