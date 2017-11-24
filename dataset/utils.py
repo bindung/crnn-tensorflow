@@ -1,6 +1,6 @@
 import tensorflow as tf
 import os
-import Image
+from PIL import Image
 import numpy as np
 
 char_list = "0123456789abcdefghijklmnopqrstuvwxyz "
@@ -87,6 +87,7 @@ def load_image(img_dir, width=100, height=32):
     data = data.resize([width, height])
     data = data.tobytes()
     return data
+
 
 
 def char_to_int(char):

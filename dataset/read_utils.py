@@ -9,22 +9,14 @@ def read_and_decode(filename, num_epochs):  # read iris_contact.tfrecords
     _, serialized_example = reader.read(filename_queue)  # return file_name and file
     features = tf.parse_single_example(serialized_example,
                                        features={
-                                           'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
-                                           # 三个参数：shape,type,default_value
-                                           'image/format': tf.FixedLenFeature((), tf.string,
-                                                                              default_value='jpeg'),
-                                           'label/value': tf.VarLenFeature(tf.int64),
-                                           'label/length': tf.FixedLenFeature([1], tf.int64)
+                                           'image/encoded': tf.FixedLenFeature((), tf.string),
+                                           'labels': tf.VarLenFeature(tf.int64)
                                        })  # return image and label
 
-    img = tf.decode_raw(features['image/encoded'], tf.uint8)
-    img = tf.reshape(img, [32, 100, 3])  # reshape image to 512*80*3
-    # img = tf.image.rgb_to_grayscale(img)
+    img = tf.image.decode_png(features['image/encoded'])
     img = tf.cast(img, tf.float32) * (1. / 255) - 0.5  # throw img tensor
-    label = features['label/value']  # throw label tensor
-    label = tf.cast(label, tf.int32)
-    length = features["label/length"]
-    return img, label, length
+    labels = tf.cast(features['labels'], tf.int32)  # throw label tensor
+    return img, img.shape[1], labels
 
 
 def inputs(batch_size, num_epochs, filename):
@@ -32,18 +24,18 @@ def inputs(batch_size, num_epochs, filename):
     with tf.name_scope('input'):
         # Even when reading in multiple threads, share the filename
         # queue.
-        img, label, length = read_and_decode(filename, num_epochs)
+        img, width, label = read_and_decode(filename, num_epochs)
 
         # Shuffle the examples and collect them into batch_size batches.
         # (Internally uses a RandomShuffleQueue.)
         # We run this in two threads to avoid being a bottleneck.
-        sh_images, sh_labels, sh_length = tf.train.shuffle_batch(
-            [img, label, length], batch_size=batch_size, num_threads=2,
+        sh_images, sh_width, sh_labels = tf.train.shuffle_batch(
+            [img, width, label], batch_size=batch_size, num_threads=2,
             capacity=1000 + 3 * batch_size,
             # Ensures a minimum amount of shuffling of examples.
             min_after_dequeue=100)
 
-        return sh_images, sh_labels, sh_length
+        return sh_images, sh_width, sh_labels
 
 
 def preprocess_for_train(image, label, scope='crnn_preprocessing_train'):

@@ -1,7 +1,4 @@
 import tensorflow as tf
-from deployment import model_deploy
-# from net import model_save as model
-import os
 
 slim = tf.contrib.slim
 import time
@@ -14,12 +11,6 @@ num_readers = 4
 num_epochs = 2
 checkpoint_dir = './tmp/'
 
-ITEMS_TO_DESCRIPTIONS = {
-    'image': 'A color image of varying height and width.',
-    'length': 'label length',
-    'label': 'A list of labels, one per each object.',
-}
-
 
 # =========================================================================== #
 # Main
@@ -28,22 +19,24 @@ def main(_):
     tf.logging.set_verbosity(tf.logging.DEBUG)  # 设置显示的log的阈值
 
     with tf.Graph().as_default():
-
-        deploy_config = model_deploy.DeploymentConfig()
         # Create global_step.
         global_step = tf.Variable(0, name='global_step', trainable=False)
 
-        file_name = os.path.join("./tfrecord", "mjtrain_690_999.tfrecords")
+        file_name = "train_data/train.tfrecord"
 
         starter_learning_rate = 0.1
-        learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step,
-                                                   100000, 0.96, staircase=True)
+        learning_rate = tf.train.exponential_decay(starter_learning_rate,
+                                                   global_step,
+                                                   100000,
+                                                   0.96,
+                                                   staircase=True)
         tf.summary.scalar("learning_rate", learning_rate)
-        sh_images, sh_labels, sh_length = read_utils.inputs(filename=file_name, batch_size=batch_size,
-                                                            num_epochs=num_epochs)
+        sh_images, sh_width, sh_labels = read_utils.inputs(filename=file_name,
+                                                           batch_size=batch_size,
+                                                           num_epochs=num_epochs)
 
         crnn = model.CRNNNet()
-        logits, inputs, seq_len, W, b = crnn.net(sh_images)
+        logits, inputs, seq_len, W, b = crnn.net(sh_images, width=sh_width)
 
         cost = crnn.losses(sh_labels, logits, seq_len)
         optimizer = tf.train.AdadeltaOptimizer(learning_rate=learning_rate).minimize(loss=cost, global_step=global_step)
