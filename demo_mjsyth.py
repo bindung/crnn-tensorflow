@@ -1,6 +1,6 @@
 import tensorflow as tf
 from net import model
-import Image
+from PIL import Image
 from dataset.utils import load_label_from_img_dir, encode_label, sparse_tensor_to_str
 import glob
 import os
