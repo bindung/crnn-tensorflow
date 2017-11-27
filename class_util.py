@@ -1,3 +1,6 @@
+NUM_CLASS = 27
+
+
 def char_to_label(c):
     if c == ' ':
         return 0

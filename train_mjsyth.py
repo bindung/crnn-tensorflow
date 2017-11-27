@@ -1,6 +1,6 @@
 import tensorflow as tf
-import os
-import time
+import os, time
+import class_util
 from net import model
 from dataset import read_utils
 from tensorflow.python import debug as tf_debug
@@ -39,6 +39,11 @@ def main(_):
             sh_images, sh_width, sh_labels = read_utils.inputs(filename=FLAGS.train_data,
                                                                batch_size=FLAGS.batch_size,
                                                                num_epochs=FLAGS.num_epochs)
+
+            params = model.CRNNNet.default_params;
+
+            params.nclass = class_util.NUM_CLASS
+            params.batch_size = FLAGS.batch_size
 
             crnn = model.CRNNNet()
             logits, inputs, seq_len, W, b = crnn.net(sh_images, width=sh_width)

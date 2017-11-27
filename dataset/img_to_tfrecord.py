@@ -3,7 +3,7 @@ sys.path.append("..")
 import tensorflow as tf
 from dataset.utils import _get_output_filename, int64_feature, bytes_feature
 from PIL import Image
-import dict
+import class_util
 
 format = 'jpeg'
 
@@ -16,7 +16,7 @@ def img_to_tfrecord(image_dir, gt_file, tf_filename):
             imname = imname[:-1]
             text = s[1].strip()
             text = text[1:-1]
-            labels = [dict.char_to_label(c) for c in text]
+            labels = [class_util.char_to_label(c) for c in text]
 
             image = Image.open(os.path.join(image_dir, imname))
             image = image.convert('RGB')
