@@ -6,10 +6,15 @@ from dataset import read_utils
 from tensorflow.python import debug as tf_debug
 
 slim = tf.contrib.slim
-batch_size = 32
-num_readers = 4
-num_epochs = 2000000
-checkpoint_dir = './tmp/'
+
+tf.app.flags.DEFINE_string("checkpoint_dir", "tmp", "")
+tf.app.flags.DEFINE_string("train_data", "train_data/train.tfrecord", "")
+tf.app.flags.DEFINE_integer("num_epochs", "200000", "")
+tf.app.flags.DEFINE_integer("batch_size", "32", "")
+tf.app.flags.DEFINE_integer("lr_exp_decay_step", "100000", "")
+tf.app.flags.DEFINE_float("lr_exp_decay_rate", "0.96", "")
+
+FLAGS = tf.app.flags.FLAGS
 
 
 # =========================================================================== #
@@ -17,8 +22,8 @@ checkpoint_dir = './tmp/'
 # =========================================================================== #
 def main(_):
     tf.logging.set_verbosity(tf.logging.DEBUG)
-    file_name = "train_data/train.tfrecord"
 
+    checkpoint_dir = FLAGS.checkpoint_dir
     with tf.Graph().as_default():
         with tf.device("/gpu:0"):
             # Create global_step.
@@ -27,13 +32,13 @@ def main(_):
             starter_learning_rate = 0.1
             learning_rate = tf.train.exponential_decay(starter_learning_rate,
                                                        global_step,
-                                                       100000,
-                                                       0.96,
+                                                       FLAGS.lr_exp_decay_step,
+                                                       FLAGS.lr_exp_decay_rate,
                                                        staircase=True)
             tf.summary.scalar("learning_rate", learning_rate)
-            sh_images, sh_width, sh_labels = read_utils.inputs(filename=file_name,
-                                                               batch_size=batch_size,
-                                                               num_epochs=num_epochs)
+            sh_images, sh_width, sh_labels = read_utils.inputs(filename=FLAGS.train_data,
+                                                               batch_size=FLAGS.batch_size,
+                                                               num_epochs=FLAGS.num_epochs)
 
             crnn = model.CRNNNet()
             logits, inputs, seq_len, W, b = crnn.net(sh_images, width=sh_width)
@@ -66,7 +71,7 @@ def main(_):
             file_writer = tf.summary.FileWriter(os.path.join(checkpoint_dir, 'my-model'), sess.graph)
 
             try:
-                step = global_step
+                step = 0
                 while not coord.should_stop():
                     start_time = time.time()
 
@@ -82,7 +87,7 @@ def main(_):
                         print('Step %d:  acc %.3f (%.3f sec)' % (step, val_ler, duration))
                         save.save(sess, os.path.join(checkpoint_dir, "crnn-model.ckpt"), global_step=global_step)
             except tf.errors.OutOfRangeError:
-                print('Done training for %d epochs, %d steps.' % (num_epochs, step))
+                print('Done training for %d epochs, %d steps.' % (FLAGS.num_epochs, step))
             finally:
                 # When done, ask the threads to stop.
                 coord.request_stop()
