@@ -5,9 +5,6 @@ from dataset.utils import load_label_from_img_dir, encode_label, sparse_tensor_t
 import glob
 import os
 import math
-
-checkpoint_dir = './tmp/'
-
 import numpy as np
 
 
@@ -29,6 +26,11 @@ def load_image(img_dir):
     return im_arr, width
 
 
+tf.app.flags.DEFINE_string("checkpoint_dir", "tmp", "")
+tf.app.flags.DEFINE_string("demo_file", "", "")
+FLAGS = tf.app.flags.FLAGS
+
+
 def prepare_data(img_dir):
     """
     :param img_dir:
@@ -41,39 +43,42 @@ def prepare_data(img_dir):
     return image_raw, label, width
 
 
-width_input = tf.placeholder(tf.int32, shape=())
-img_input = tf.placeholder(tf.float32, shape=(None, None, 3))
-tf.reshape(img_input, shape=(32, -1, 3))
-img_4d = tf.expand_dims(img_input, 0)
-
-# define the crnn net
-crnn_params = model.CRNNNet.default_params._replace(batch_size=1)  # ,seq_length=int(width/4+1)
-crnn = model.CRNNNet(crnn_params)
-logits, inputs, seq_len, W, b = crnn.net(img_4d, width=width_input)
-
-decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, seq_len, merge_repeated=False)
-
-saver = tf.train.Saver()
-
-sess = tf.Session()
-dir = tf.train.latest_checkpoint(checkpoint_dir)
-saver.restore(sess, dir)
-sess.run(tf.local_variables_initializer())
-print("Model restore!", dir)
-
-
-def recognize_img(img_dir):
-    img_raw, label, width = prepare_data(img_dir)
-
-    decoded_s = sess.run([decoded], feed_dict={img_input: img_raw, width_input: width})
-    # print(decoded_s[0])
-    str = sparse_tensor_to_str(decoded_s[0])
-    print("label", label)
-    print('Result', str)
+tf.app.flags.DEFINE_string("checkpoint_dir", "tmp", "")
+tf.app.flags.DEFINE_string("demo_file", "", "")
+FLAGS = tf.app.flags.FLAGS
 
 
 def main(_):
-    img_dirs = glob.glob(os.path.join("demo/", "*.png"))
+    width_input = tf.placeholder(tf.int32, shape=())
+    img_input = tf.placeholder(tf.float32, shape=(None, None, 3))
+    tf.reshape(img_input, shape=(32, -1, 3))
+    img_4d = tf.expand_dims(img_input, 0)
+
+    # define the crnn net
+    crnn_params = model.CRNNNet.default_params._replace(batch_size=1)  # ,seq_length=int(width/4+1)
+    crnn = model.CRNNNet(crnn_params)
+    logits, inputs, seq_len, W, b = crnn.net(img_4d, width=width_input)
+
+    decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, seq_len, merge_repeated=False)
+
+    saver = tf.train.Saver()
+
+    sess = tf.Session()
+    dir = tf.train.latest_checkpoint(FLAGS.checkpoint_dir)
+    saver.restore(sess, dir)
+    sess.run(tf.local_variables_initializer())
+    print("Model restore!", dir)
+
+    def recognize_img(img_dir):
+        img_raw, label, width = prepare_data(img_dir)
+
+        decoded_s = sess.run([decoded], feed_dict={img_input: img_raw, width_input: width})
+        # print(decoded_s[0])
+        str = sparse_tensor_to_str(decoded_s[0])
+        print("label", label)
+        print('Result', str)
+
+    img_dirs = glob.glob(FLAGS.demo_file)
     for i, img_dir in enumerate(img_dirs):
         print("index：", i, "name", img_dir)
         # index = int(input("the index choose is :"))
