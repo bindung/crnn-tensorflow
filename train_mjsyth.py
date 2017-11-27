@@ -40,12 +40,8 @@ def main(_):
                                                                batch_size=FLAGS.batch_size,
                                                                num_epochs=FLAGS.num_epochs)
 
-            params = model.CRNNNet.default_params;
-
-            params.nclass = class_util.NUM_CLASS
-            params.batch_size = FLAGS.batch_size
-
             crnn = model.CRNNNet()
+
             logits, inputs, seq_len, W, b = crnn.net(sh_images, width=sh_width)
 
             cost = crnn.losses(sh_labels, logits, seq_len)

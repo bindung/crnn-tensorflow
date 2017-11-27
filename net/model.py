@@ -44,7 +44,7 @@ class CRNNNet(object):
         # nclass=37,  # 0~9,a~z,还有一个啥都不是
         # nclass=127,
         nclass=27,
-        batch_size=32,
+        batch_size=1,
         seq_length=26,
         input_size=512,
         reuse=None
