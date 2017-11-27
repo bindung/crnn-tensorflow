@@ -42,7 +42,8 @@ class CRNNNet(object):
         imgH=64,  # the height / width of the input image to network
         nc=1,
         # nclass=37,  # 0~9,a~z,还有一个啥都不是
-        nclass=127,
+        # nclass=127,
+        nclass=27,
         batch_size=32,
         seq_length=26,
         input_size=512,
