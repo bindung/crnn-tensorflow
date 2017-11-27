@@ -18,6 +18,7 @@ def load_image(img_dir):
      load image and resize it
     """
     img = Image.open(img_dir)
+    img = img.convert('RGB')
     size = img.size
     width = math.ceil(size[0] * (32 / size[1]))
     img = img.resize([width, 32])
@@ -58,7 +59,7 @@ sess = tf.Session()
 dir = tf.train.latest_checkpoint(checkpoint_dir)
 saver.restore(sess, dir)
 sess.run(tf.local_variables_initializer())
-print("Model restore!")
+print("Model restore!", dir)
 
 
 def recognize_img(img_dir):
@@ -68,11 +69,11 @@ def recognize_img(img_dir):
     # print(decoded_s[0])
     str = sparse_tensor_to_str(decoded_s[0])
     print("label", label)
-    print('识别结果', str)
+    print('Result', str)
 
 
 def main(_):
-    img_dirs = glob.glob(os.path.join("demo/", "*.jpg"))
+    img_dirs = glob.glob(os.path.join("demo/", "*.png"))
     for i, img_dir in enumerate(img_dirs):
         print("index：", i, "name", img_dir)
         # index = int(input("the index choose is :"))
