@@ -8,7 +8,7 @@ from tensorflow.python import debug as tf_debug
 slim = tf.contrib.slim
 batch_size = 32
 num_readers = 4
-num_epochs = 2
+num_epochs = 2000000
 checkpoint_dir = './tmp/'
 
 
@@ -80,7 +80,6 @@ def main(_):
                     if step % 10 == 0:
                         print('Step %d:  acc %.3f (%.3f sec)' % (step, val_ler, duration))
                         save.save(sess, os.path.join(checkpoint_dir, "crnn-model.ckpt"), global_step=global_step)
-                        step += 1
             except tf.errors.OutOfRangeError:
                 print('Done training for %d epochs, %d steps.' % (num_epochs, step))
             finally:
